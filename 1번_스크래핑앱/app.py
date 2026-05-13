@@ -1,6 +1,7 @@
 ﻿import json
 import re
 from datetime import datetime
+from html import unescape
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.request import Request, urlopen
 
@@ -66,17 +67,36 @@ def fetch_news():
   with urlopen(req, timeout=10) as resp:
     html = resp.read().decode("utf-8", errors="ignore")
 
-  pattern = re.compile(r'<a[^>]*class="[^"]*sa_text_title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.I | re.S)
+  patterns = [
+    # 기존 섹션 카드 타이틀
+    re.compile(r'<a[^>]*class="[^\"]*sa_text_title[^\"]*"[^>]*href="([^\"]+)"[^>]*>(.*?)</a>', re.I | re.S),
+    # title 속성 기반
+    re.compile(r'<a[^>]*href="([^\"]+)"[^>]*title="([^\"]+)"[^>]*>', re.I | re.S),
+    # /article/ 링크 일반 케이스
+    re.compile(r'<a[^>]*href="([^\"]*/article/[^\"]+)"[^>]*>(.*?)</a>', re.I | re.S),
+  ]
+
   seen = set()
   items = []
-  for href, raw_title in pattern.findall(html):
-    title = re.sub(r"<[^>]+>", "", raw_title).strip()
-    if not title or title in seen:
-      continue
-    seen.add(title)
-    if href.startswith("/"):
-      href = "https://news.naver.com" + href
-    items.append({"title": title, "link": href})
+
+  for pattern in patterns:
+    for href, raw_title in pattern.findall(html):
+      title = unescape(re.sub(r"<[^>]+>", "", raw_title)).strip()
+      if href.startswith("/"):
+        href = "https://news.naver.com" + href
+
+      # 뉴스 링크/제목 최소 품질 필터
+      if not title or len(title) < 6:
+        continue
+      if "news.naver.com" not in href and "/article/" not in href:
+        continue
+      if title in seen:
+        continue
+
+      seen.add(title)
+      items.append({"title": title, "link": href})
+      if len(items) >= 15:
+        break
     if len(items) >= 15:
       break
 
