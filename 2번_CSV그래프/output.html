@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSV 추이 그래프</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 8px; }
+    .meta { color: #555; margin-bottom: 16px; }
+    .chart-wrap { max-width: 1000px; }
+  </style>
+</head>
+<body>
+  <h1>Daily Delhi Climate - 평균기온 추이</h1>
+  <div class="meta">소스 CSV: <strong>sample_daily_delhi_climate.csv</strong></div>
+  <div class="chart-wrap">
+    <canvas id="trendChart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const labels = ["2013-01-01","2013-01-02","2013-01-03","2013-01-04","2013-01-05","2013-01-06","2013-01-07","2013-01-08","2013-01-09","2013-01-10"];
+    const dataValues = [10,7.4,7.17,8.67,6,7,7,8.86,14,11];
+
+    const ctx = document.getElementById('trendChart');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: '평균기온(meantemp)',
+          data: dataValues,
+          borderWidth: 2,
+          tension: 0.2,
+          pointRadius: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: '날짜(date)' } },
+          y: { title: { display: true, text: '평균기온' } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
